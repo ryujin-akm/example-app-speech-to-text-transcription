@@ -1,37 +1,37 @@
 import streamlit as st
-import speech_recognition as sr
+from bokeh.models.widgets import Button
+from bokeh.models import CustomJS
+from streamlit_bokeh_events import streamlit_bokeh_events
 
-# create a speech recognizer object
-r = sr.Recognizer()
+stt_button = Button(label="Speak", width=100)
 
-# define a function to transcribe audio
-def transcribe_audio(audio_file):
-    # read the audio data
-    with sr.AudioFile(audio_file) as source:
-        audio = r.record(source)
+stt_button.js_on_event("button_click", CustomJS(code="""
+    var recognition = new webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+ 
+    recognition.onresult = function (e) {
+        var value = "";
+        for (var i = e.resultIndex; i < e.results.length; ++i) {
+            if (e.results[i].isFinal) {
+                value += e.results[i][0].transcript;
+            }
+        }
+        if ( value != "") {
+            document.dispatchEvent(new CustomEvent("GET_TEXT", {detail: value}));
+        }
+    }
+    recognition.start();
+    """))
 
-    # transcribe the audio using Google Speech Recognition
-    try:
-        transcript = r.recognize_google(audio)
-    except sr.UnknownValueError:
-        transcript = "Could not understand audio"
-    except sr.RequestError as e:
-        transcript = f"Could not request results from Google Speech Recognition service; {e}"
+result = streamlit_bokeh_events(
+    stt_button,
+    events="GET_TEXT",
+    key="listen",
+    refresh_on_update=False,
+    override_height=75,
+    debounce_time=0)
 
-    return transcript
-
-# create a Streamlit app
-def app():
-    # add a button to record audio
-    if st.button("Record Audio"):
-        # record audio using Streamlit's builtin recorder
-        with st.audio("audio.wav", format="wav"):
-            audio_file = st.recorder()
-        # transcribe the audio and display the transcript
-        transcript = transcribe_audio(audio_file)
-        st.write("Transcript:")
-        st.write(transcript)
-
-# run the app
-if __name__ == "__main__":
-    app()
+if result:
+    if "GET_TEXT" in result:
+        st.write(result.get("GET_TEXT"))
