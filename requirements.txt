@@ -8,3 +8,5 @@ torch
 SpeechRecognition
 pydub
 pocketsphinx
+bokeh
+streamlit-bokeh-events
