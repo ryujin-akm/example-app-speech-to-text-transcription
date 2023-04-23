@@ -1,3 +1,10 @@
-requests
+altair
+pandas
 streamlit
-click==8
+streamlit-audiorecorder
+Pillow
+yolov5
+torch
+SpeechRecognition
+pydub
+pocketsphinx
